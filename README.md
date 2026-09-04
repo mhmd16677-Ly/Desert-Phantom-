@@ -1,18 +1,30 @@
-# Desert Phantom V8.0 PROFESSIONAL 👻🇱🇾
-**Bug Bounty Automation Framework - Career Edition**
+# Desert Phantom V10 ULTIMATE - Bug Bounty Framework
 
-> Built by **Mohammed Al-Qadi (mhmd16677)** - Tripoli, Libya | Aspiring Bug Bounty Hunter & Security Researcher
+**Author:** mhmd16677 | Tripoli, LY
+**Edition:** V10 STABLE - Career Ready
+**Status:** For Authorized Testing Only
 
-### 🚀 Features (V8.0 PRO)
-- **9 Modules:** Connectivity Bypass (Anti-Libyana), Security Headers (CVSS), Tech Stack & CMS Detection, Top Ports Scanner, Injection Suite (XSS $1000, SQLi $3000, LFI $1500, SSRF $2000, Open Redirect $500), Subdomain Enumeration
-- **Professional Reporting:** TXT, JSON, PDF, and HackerOne-ready Markdown
-- **Anti-Block:** 20s timeout, User-Agent rotation, http/https fallback - Works on Libyana 4G
-- **Clean OOP Code:** Ready for portfolio & job interviews
+Professional Bug Bounty automation that FIXED the empty live.txt bug.
 
-### 🛠️ Usage
+### 🔥 Features (V10 STABLE)
+- [1/4] Subdomain Enum (subfinder + fallback list)
+- [2/4] Live Filter with Tech Detect (FIXED live.txt empty issue)
+- [3/4] Tech Stack Detection (WordPress, Drupal, React/Next.js, Cloudflare, Nginx)
+- [4/4] Port Scan (21,22,80,443,8080,8443,3000,5000) + MD/JSON Reports
+
+### 🚀 Usage
 ```bash
-pip install requests fpdf2
-python3 ultimate.py example.com
-# or
-python3 ultimate.py --help
-md
+python3 ultimate.py -d hackerone.com
+python3 ultimate.py -d example.com
+
+### Output
+- live.txt - 7+ live hosts
+- Report.md - HackerOne ready
+- Report.json
+
+### Disclaimer
+FOR AUTHORIZED TESTING ONLY
+
+### Author
+- GitHub: mhmd16677
+- Tripoli, Libya
