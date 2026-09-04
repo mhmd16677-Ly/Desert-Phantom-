@@ -1,13 +1,18 @@
-# Desert Phantom V5.2 ULTIMATE
-Phantom from the Libyan desert - by mhmd16677
+# Desert Phantom V8.0 PROFESSIONAL 👻🇱🇾
+**Bug Bounty Automation Framework - Career Edition**
 
-Features 5/5
-[1/5] Headers Security Check
-[2/5] Sensitive Files
-[3/5] XSS $1000 + POC
-[4/5] Open Redirect $500 + POC
-[5/5] Bug Report -> bug_report.txt
+> Built by **Mohammed Al-Qadi (mhmd16677)** - Tripoli, Libya | Aspiring Bug Bounty Hunter & Security Researcher
 
-Usage: python3 ultimate.py
-Alias: phantom
-WORKING 100% 👻
+### 🚀 Features (V8.0 PRO)
+- **9 Modules:** Connectivity Bypass (Anti-Libyana), Security Headers (CVSS), Tech Stack & CMS Detection, Top Ports Scanner, Injection Suite (XSS $1000, SQLi $3000, LFI $1500, SSRF $2000, Open Redirect $500), Subdomain Enumeration
+- **Professional Reporting:** TXT, JSON, PDF, and HackerOne-ready Markdown
+- **Anti-Block:** 20s timeout, User-Agent rotation, http/https fallback - Works on Libyana 4G
+- **Clean OOP Code:** Ready for portfolio & job interviews
+
+### 🛠️ Usage
+```bash
+pip install requests fpdf2
+python3 ultimate.py example.com
+# or
+python3 ultimate.py --help
+md
