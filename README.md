@@ -1,23 +1,13 @@
-# 👻 Desert Phantom V2.0
-### Phantom from the Libyan desert 🇱🇾
+# Desert Phantom V5.2 ULTIMATE
+Phantom from the Libyan desert - by mhmd16677
 
-Advanced Ethical Hacking - Security Header Scanner
+Features 5/5
+[1/5] Headers Security Check
+[2/5] Sensitive Files
+[3/5] XSS $1000 + POC
+[4/5] Open Redirect $500 + POC
+[5/5] Bug Report -> bug_report.txt
 
-**Author:** mhmd16677-Ly | From Tripoli to the World
-
----
-
-### 🚀 What is this?
-أداة فحص أمني تكشف ثغرات المواقع عن طريق تحليل الـ Security Headers. أداة واحدة تجمع شغل أداتين قدم!
-
-### ✨ Features
-- 🛡️ Detects Missing X-Frame-Options (Clickjacking Protection)
-- 🔒 Checks CSP Headers (XSS Protection) 
-- 🔐 Validates HSTS (Man-in-the-Middle Protection)
-- ⚡ Fast & Lightweight - Built for Bug Bounty
-
-### 📦 How to Use
-```bash
-git clone https://github.com/mhmd16677-Ly/Desert-Phantom-.git
-cd Desert-Phantom-
-python3 desert_phantom_v2.py https://example.com
+Usage: python3 ultimate.py
+Alias: phantom
+WORKING 100% 👻
