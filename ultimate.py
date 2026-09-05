@@ -1,132 +1,146 @@
-#!/usr/bin/env python3
-# Desert Phantom V10 ULTIMATE - mhmd16677 | Tripoli, LY
-# FOR AUTHORIZED TESTING ONLY - Bug Bounty Professional
+#!/data/data/com.termux/files/usr/bin/python3
+# Desert Phantom V15.0 ULTIMATE FIXED - by qadi | mhmd16677 | Libya
+# FIXED: No invalid escape sequences | Beautiful AI Report | HackerOne Ready
 
-import os, sys, socket, json, argparse, subprocess, requests
+import argparse, datetime, pathlib, html, os, sys
 from pathlib import Path
-from datetime import datetime
+import requests
+from concurrent.futures import ThreadPoolExecutor
 
-HOME = Path.home()
-GO_BIN = HOME / "go" / "bin"
+# No more "\|" bug - using raw string
+BANNER = r"""
+ ____ _____ ____ _____ ____ _____ ____ _ _ _ _ _ _____ ___ __ __
+| _ \| ____/ ___|| ____| _ \|_ _| | _ \| | | | / \ | \ | |_ _/ _ \| \/ |
+| | | | _| \___ \| _| | |_) | | | | |_) | |_| | / _ \ | \| | | || | | | |\/| |
+| |_| | |___ ___) | |___| _ < | | | __/| _ |/ ___ \| |\ | | || |_| | | | |
+|____/|_____|____/|_____|_| \_\ |_| |_| |_| |_/_/ \_\_| \_| |_| \___/|_| |_|
+                    V15.0 FIXED - BEAUTIFUL AI REPORT
+"""
 
-def banner():
-    print("""
-\x1b[96m
- ██████╗ ███████╗███████╗███████╗██████╗ ████████╗
- ██╔══██╗██╔════╝██╔════╝██╔════╝██╔══██╗╚══██╔══╝
- ██║ ██║█████╗ ███████╗█████╗ ██████╔╝ ██║
- ██║ ██║██╔══╝ ╚════██║██╔══╝ ██╔══██╗ ██║
- ██████╔╝███████╗███████║███████╗██║ ██║ ██║
- ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝ ╚═╝ ╚═╝
- V10 ULTIMATE | mhmd16677 | Career Ready
-\x1b[0m
-    """)
-
-def tool_path(name):
-    p = GO_BIN / name
-    if p.exists(): return str(p)
+def check_live(url):
     try:
-        out = subprocess.run(f"which {name}", shell=True, capture_output=True, text=True, timeout=5)
-        if out.stdout.strip(): return out.stdout.strip()
-    except: pass
-    return name
+        r = requests.get(url, timeout=5, verify=False, headers={"User-Agent":"PhantomV15"})
+        if r.status_code < 500:
+            return url, r.status_code
+    except:
+        pass
+    return None
 
-def scan_tech(url):
-    tech=[]
-    try:
-        r=requests.get(url, timeout=8, headers={"User-Agent":"Desert-Phantom-V10"}, verify=False)
-        h=str(r.headers).lower(); b=r.text.lower()
-        if "wp-content" in b or "wordpress" in b: tech.append("WordPress")
-        if "joomla" in b: tech.append("Joomla")
-        if "drupal" in b: tech.append("Drupal")
-        if "laravel" in h or "php" in h: tech.append("PHP/Laravel")
-        if "next" in b or "react" in b: tech.append("React/Next.js")
-        if "nginx" in h: tech.append("Nginx")
-        if "cloudflare" in h: tech.append("Cloudflare")
-        if not tech: tech=["Unknown"]
-    except: tech=["Unreachable"]
-    return tech
-
-def scan_ports(host):
-    opens=[]
-    for port in [21,22,80,443,8080,8443,3000,5000,8000,9000]:
+def check_vuln(base_url):
+    vulns = []
+    payloads = {
+        "wordpress-db-exposure": ("/db.sql", "HIGH", "#ff0055"),
+        "exposed-env": ("/.env", "HIGH", "#ff0055"),
+        "git-exposure": ("/.git/HEAD", "HIGH", "#ff0055"),
+        "phpinfo-files": ("/info.php", "MEDIUM", "#ff8800"),
+        "aspx-debug-mode": ("/debug", "LOW", "#ffcc00"),
+        "backup-zip": ("/backup.zip", "MEDIUM", "#ff8800"),
+    }
+    for name, (path, sev, color) in payloads.items():
+        url = base_url.rstrip("/") + path
         try:
-            s=socket.socket(); s.settimeout(1)
-            if s.connect_ex((host,port))==0: opens.append(port)
-            s.close()
-        except: pass
-    return opens
+            r = requests.get(url, timeout=6, verify=False)
+            if r.status_code == 200 and len(r.text) > 20 and "404" not in r.text[:100]:
+                # simple fingerprint
+                if path == "/db.sql" and ("CREATE TABLE" in r.text or "INSERT INTO" in r.text):
+                    vulns.append({"name":name,"severity":sev,"url":url,"color":color,"evidence":r.text[:120]})
+                elif path in ["/.env","/.git/HEAD","/backup.zip","/info.php","/debug"] and r.status_code == 200:
+                    vulns.append({"name":name,"severity":sev,"url":url,"color":color,"evidence":f"Status {r.status_code} - {len(r.text)} bytes"})
+        except:
+            continue
+    return vulns
 
 def main():
-    banner()
-    parser=argparse.ArgumentParser(description="Desert Phantom V10 ULTIMATE - Authorized Bug Bounty")
-    parser.add_argument("-d","--domain", required=True, help="example.com - must be authorized target")
-    args=parser.parse_args()
-    domain=args.domain.replace("https://","").replace("http://","").split("/")[0]
-    out=Path(f"Phantom_V10_{domain.replace('.','_')}_{datetime.now().strftime('%Y%m%d')}")
-    out.mkdir(exist_ok=True)
-    print(f"[+] Target: {domain}")
-    print(f"[+] Output: {out}")
+    parser = argparse.ArgumentParser(description="Phantom V15")
+    parser.add_argument("-d","--domain", required=True, help="Target domain")
+    args = parser.parse_args()
+    domain = args.domain.strip().replace("https://","").replace("http://","").split("/")[0]
 
-    print("\n[1/4] Subdomain Enum...")
-    subs=[]
-    sf=tool_path("subfinder")
-    if Path(sf).exists():
-        try:
-            cmd=f"{sf} -d {domain} -silent -timeout 30"
-            res=subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=120)
-            subs=[x for x in res.stdout.splitlines() if x]
-        except: pass
-    if not subs:
-        print(" -> subfinder not found / fallback list")
-        subs=[domain, f"www.{domain}", f"api.{domain}", f"dev.{domain}", f"admin.{domain}", f"test.{domain}"]
-    (out/"subs.txt").write_text("\n".join(subs))
-    print(f" -> {len(subs)} subs")
+    print(f"\033[96m{BANNER}\033[0m")
+    print(f"\033[93m[~] Target: {domain} | Hunter: qadi | Libya | mhmd16677\033[0m\n")
 
-    print("\n[2/4] Live Filter (FIX for empty live.txt)...")
-    live=[]
-    hx=tool_path("httpx")
-    if Path(hx).exists():
-        try:
-            cmd=f"cat {out/'subs.txt'} | {hx} -silent -tech-detect -status-code -title -follow-redirects -timeout 10 -retries 1 -threads 50"
-            res=subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300)
-            live=[x for x in res.stdout.splitlines() if x]
-        except Exception as e: print(f" httpx error: {e}")
-    if not live:
-        print(" -> httpx empty, using requests fallback (هذا يصلح مشكلة live.txt الفاضي)")
-        for s in subs[:30]:
-            for proto in ["https://","http://"]:
-                try:
-                    r=requests.get(proto+s, timeout=6, verify=False)
-                    if r.status_code < 500:
-                        live.append(f"{proto}{s} [{r.status_code}] {r.headers.get('Server','')}")
-                        break
-                except: pass
-    (out/"live.txt").write_text("\n".join(live))
-    print(f" -> Live: {len(live)}")
+    # 1. Subdomain generation (fixed list without escape bug)
+    prefixes = ["www","mail","dev","api","test","admin","portal","backup","db","corp","prod","beta","demo","manage","secure","jira","jenkins","grafana","gitlab","kibana","rest","testphp","testaspnet"]
+    subs = [f"http://{p}.{domain}" for p in prefixes] + [f"https://{p}.{domain}" for p in prefixes]
+    subs.append(f"https://{domain}")
 
-    print("\n[3/4] Tech + Ports...")
-    findings=[]
-    for entry in live[:25]:
-        url=entry.split()[0] if entry else f"https://{domain}"
-        host=url.replace("https://","").replace("http://","").split("/")[0].split(":")[0]
-        tech=scan_tech(url); ports=scan_ports(host)
-        findings.append({"url":url,"host":host,"tech":tech,"ports":ports})
-        print(f" {host} => {','.join(tech)} | Ports {ports}")
+    print(f"[*] Generated {len(subs)} subs, checking live...")
+    live_urls = []
+    with ThreadPoolExecutor(max_workers=20) as ex:
+        results = ex.map(check_live, subs)
+        for res in results:
+            if res:
+                live_urls.append(res[0])
+                print(f" \033[92m+ LIVE [{res[1]}] {res[0]}\033[0m")
 
-    print("\n[4/4] Reports...")
-    md=f"# Desert Phantom V10 - {domain}\n\n**Author:** mhmd16677 - Tripoli, LY\n**Date:** {datetime.now()}\n**Scope:** Authorized testing only\n\n## Live ({len(live)})\n" + "\n".join([f"- {x}" for x in live]) + "\n\n## Findings\n"
-    for f in findings:
-        md+=f"\n### {f['host']}\n- URL: {f['url']}\n- Tech: {', '.join(f['tech'])}\n- Ports: {f['ports']}\n"
+    if not live_urls:
+        live_urls = [f"https://{domain}"]
 
-    (out/"Report.md").write_text(md, encoding="utf-8")
-    (out/"Report.json").write_text(json.dumps({"domain":domain,"live":live,"findings":findings}, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"\n[*] Scanning {len(live_urls)} live hosts for HIGH vulns...")
+    all_vulns = []
+    with ThreadPoolExecutor(max_workers=15) as ex:
+        for vuln_list in ex.map(check_vuln, live_urls[:10]):
+            all_vulns.extend(vuln_list)
+            for v in vuln_list:
+                print(f" \033[91m! [{v['severity']}] {v['name']} => {v['url']}\033[0m")
 
-    print(f"\n\x1b[92m[✓] DONE -> {out}/\x1b[0m")
-    print(f" - {out/'live.txt'} ({len(live)} live)")
-    print(f" - {out/'Report.md'}")
-    print(f" - {out/'Report.json'}")
-    print("\nNote: استخدم هذا فقط على برامج عندك تصريح عليها HackerOne/Bugcrowd")
+    # AI Priority
+    high = [v for v in all_vulns if v['severity']=="HIGH"]
+    all_vulns = sorted(all_vulns, key=lambda x: {"HIGH":0,"MEDIUM":1,"LOW":2}[x['severity']])
 
-if __name__=="__main__":
+    # Report
+    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_dir = Path.home() / f"Phantom_V15_{domain}_{ts}"
+    out_dir.mkdir(exist_ok=True)
+
+    vhtml = ""
+    if not all_vulns:
+        vhtml = "<p style='color:#888'>No critical exposures found - target looks clean (good for learning).</p>"
+    else:
+        for v in all_vulns:
+            vhtml += f"""
+            <div style='border-left:5px solid {v['color']};background:#15151f;padding:14px;margin:12px 0;border-radius:10px'>
+                <div style='display:flex;justify-content:space-between'><b style='color:{v['color']};font-size:16px'>[{v['severity']}] {html.escape(v['name'])}</b><span style='background:{v['color']};color:#000;padding:2px 8px;border-radius:12px;font-size:12px'>{v['severity']}</span></div>
+                <div style='margin-top:8px'><a href='{v['url']}' style='color:#00ff88;word-break:break-all'>{v['url']}</a></div>
+                <div style='color:#888;font-size:12px;margin-top:6px'>Evidence: {html.escape(v['evidence'][:200])}</div>
+                <div style='margin-top:8px;font-size:13px'><b>AI Business Impact:</b> { 'Full DB leak - Account Takeover - $$$' if v['severity']=='HIGH' else 'Info disclosure - Low risk' }</div>
+            </div>
+            """
+
+    live_html = "".join([f"<div style='padding:4px'>• <span style='color:#00ff88'>{html.escape(u)}</span></div>" for u in live_urls[:20]])
+
+    html_report = f"""<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+    <title>PHANTOM V15 - {html.escape(domain)}</title>
+    <style>body{{background:#080810;color:#e0e0e0;font-family:Inter,monospace;margin:0}}.hdr{{background:linear-gradient(90deg,#7b2cff,#00ff88);padding:28px;text-align:center;color:#fff}}.stats{{display:flex;justify-content:center;gap:14px;padding:20px;flex-wrap:wrap}}.card{{background:#1a1a2e;border-radius:12px;padding:16px 22px;min-width:95px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4)}}.num{{font-size:28px;font-weight:800;color:#00ff88}}.sec{{max-width:950px;margin:auto;padding:20px}} h2{{color:#00ff88;border-bottom:2px solid #1a1a2e;padding-bottom:8px}} pre{{background:#111;padding:14px;border-radius:8px;white-space:pre-wrap;border:1px solid #222}}</style>
+    </head><body>
+    <div class='hdr'><h1>🤖 DESERT PHANTOM V15.0 FIXED</h1><p>{html.escape(domain)} | Bug Bounty Hunter: qadi | Tripoli, Libya | mhmd16677</p><p>V15 - AI Priority Engine + Business Report - No Glitch</p></div>
+    <div class='stats'><div class='card'><div class='num'>{len(subs)}</div><div>Subdomains</div></div><div class='card'><div class='num'>{len(live_urls)}</div><div>Live</div></div><div class='card'><div class='num' style='color:#ff0055'>{len(all_vulns)}</div><div>Vulns</div></div><div class='card'><div class='num' style='color:#ff0055'>{len(high)}</div><div>HIGH</div></div></div>
+    <div class='sec'><h2>💥 Vulnerabilities (AI Sorted)</h2>{vhtml}
+    <h2>🎯 Live Hosts</h2>{live_html}
+    <h2>📝 HackerOne English Template (Copy)</h2>
+    <pre>Title: [{{severity}}] {{name}} at {html.escape(domain)}
+Description:
+Found publicly accessible file at {{url}}.
+
+Steps to Reproduce:
+1. Navigate to {{url}}
+2. Observe file content leaks
+
+Impact: Data leak / Account Takeover potential - High business impact.
+Remediation: Remove file from public web root or protect with auth.
+
+Researcher: mhmd16677 - Libya
+</pre>
+    </div></body></html>
+    """
+    (out_dir/"Report_AI.html").write_text(html_report, encoding="utf-8")
+    (out_dir/"live.txt").write_text("\n".join(live_urls), encoding="utf-8")
+    (out_dir/"vulns.json").write_text(str(all_vulns), encoding="utf-8")
+
+    print(f"\n\033[92m✅ V15 COMPLETE - No SyntaxWarning!\033[0m")
+    print(f"📁 {out_dir}")
+    print(f"📄 Report_AI.html - OPEN IT: cd {out_dir} && python -m http.server 8888")
+    print(f" Then: http://127.0.0.1:8888/Report_AI.html")
+
+if __name__ == "__main__":
     main()
